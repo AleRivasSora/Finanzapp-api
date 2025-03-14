@@ -3,8 +3,9 @@ from fastapi import Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
+import os
 
-SECRET_KEY = "your_secret_key"
+SECRET_KEY="your_secret_key"
 
 class JWTMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, exempt_routes=None):
@@ -13,7 +14,6 @@ class JWTMiddleware(BaseHTTPMiddleware):
         self.exempt_routes = exempt_routes if exempt_routes is not None else []
 
     async def dispatch(self, request: Request, call_next):
-        print(request.url.path)
         if request.url.path in self.exempt_routes:
             return await call_next(request)
 
@@ -26,6 +26,9 @@ class JWTMiddleware(BaseHTTPMiddleware):
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             request.state.user = payload
+            # print(request.state.user)  # <-- print DESPUÉS de asignar el payload
+            # response = await call_next(request)  # <-- call_next ANTES del return
+            # return response
         except jwt.ExpiredSignatureError:
             return JSONResponse(status_code=401, content={"detail": "Token has expired"})
         except jwt.InvalidTokenError:
